@@ -1,5 +1,6 @@
 -- set up the directory object for GetTraceFile
--- © 2021 Method R Corporation
+
+-- Copyright (c) 2021 Method R Corporation
 
 select directory_name from all_directories where directory_path = (select value from v$diag_info where name = 'Diag Trace');
 

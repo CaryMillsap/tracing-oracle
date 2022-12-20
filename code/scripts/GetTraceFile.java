@@ -1,4 +1,16 @@
-© 2021 Method R Corporation
+/*
+Fetch Oracle trace files
+
+The code that Amazon recommends for fetching trace data from Amazon RDS
+doesn't work quite right; it fails to copy trace file lines that are longer
+than 400 characters.
+
+  https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_LogAccess.Concepts.Oracle.html#USER_LogAccess.Concepts.Oracle.WorkingWithTracefiles
+
+This program works, irrespective of trace line length.
+*/
+
+// Copyright (c) 2021 Method R Corporation
 
 import java.io.*;
 import java.sql.*;
