@@ -7,7 +7,7 @@
   SQL> @trace-script YOUR-SCRIPT.sql
 
   It will attempt to terminate the tool's session normally so the RDBMS can
-  record critical end-of-trace information.
+  write critical end-of-trace information.
 */
 
 start trace-on
