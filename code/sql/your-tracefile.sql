@@ -1,4 +1,4 @@
--- print trace file name for sid=&1
+-- print trace file name for SID=&1
 
 select tracefile
 from v$process
