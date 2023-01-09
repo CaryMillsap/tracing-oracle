@@ -64,9 +64,9 @@ end dev_trace;
 create or replace package body dev_trace as
 
 	procedure trace_begin(
-		  binds in boolean default false
-		, plans in varchar2 default 'first_execution'
-		, statistics_level in varchar2 default 'typical'
+		  binds				in boolean	default false
+		, plans				in varchar2	default 'first_execution'
+		, statistics_level	in varchar2	default 'typical'
 	) as
 		b varchar2( 5) := case binds when true then 'true' else 'false' end;
 		-- p varchar2(15) := case when plans is null then 'first_execution' else plans end;
@@ -163,66 +163,110 @@ end dba_trace;
 create or replace package body mr.dba_trace  as
 
 	procedure session_on(
-		  sid in number default null
-		, serial in number default null
-		, binds in boolean default false
-		, plans in varchar2 default 'first_execution'
+		  sid		in number	default null
+		, serial	in number	default null
+		, binds		in boolean	default false
+		, plans		in varchar2	default 'first_execution'
 	) as
 	begin
 		dbms_monitor.session_trace_enable(
-			  session_id => sid
-			, serial_num => serial
-			, waits => true
-			, binds => binds
-			, plan_stat => plans
+			  session_id	=> sid
+			, serial_num	=> serial
+			, waits			=> true
+			, binds			=> binds
+			, plan_stat		=> plans
 		);
 	end;
 
 	procedure client_on(
-		  client in varchar2
-		, binds in boolean default false
-		, plans in varchar2 default 'first_execution'
+		  client	in varchar2
+		, binds		in boolean	default false
+		, plans		in varchar2	default 'first_execution'
 	) as
 	begin
 		dbms_monitor.client_id_trace_enable(
-			  client_id => client
-			, waits => true
-			, binds => binds
-			, plan_stat => plans
+			  client_id	=> client
+			, waits		=> true
+			, binds		=> binds
+			, plan_stat	=> plans
 		);
 	end;
 
 	procedure sma_on(
-		  service in varchar2
-		, module in varchar2 default '###ALL_MODULES'
-		, action in varchar2 default '###ALL_ACTIONS'
-		, binds in boolean default false
-		, plans in varchar2 default 'first_execution'
-		, instance in varchar2 default null
+		  service	in varchar2
+		, module	in varchar2	default '###ALL_MODULES'
+		, action	in varchar2	default '###ALL_ACTIONS'
+		, binds		in boolean	default false
+		, plans		in varchar2	default 'first_execution'
+		, instance	in varchar2	default null
 	) as
 	begin
 		dbms_monitor.serv_mod_act_trace_enable(
-			  service_name => service
-			, module_name => module
-			, action_name => action
-			, waits => true
-			, binds => true
-			, instance_name => instance
-			, plan_stat => plans
+			  service_name	=> service
+			, module_name	=> module
+			, action_name	=> action
+			, waits			=> true
+			, binds			=> true
+			, instance_name	=> instance
+			, plan_stat		=> plans
 		);
 	end;
 
 	procedure database_on(
-		  binds in boolean default false
-		, plans in varchar2 default 'first_execution'
-		, instance in varchar2 default null
+		  binds		in boolean	default false
+		, plans		in varchar2	default 'first_execution'
+		, instance	in varchar2	default null
 	) as
 	begin
 		dbms_monitor.database_trace_enable(
-			  waits => true
-			, binds => true
-			, instance_name => instance
-			, plan_stat => plans
+			  waits			=> true
+			, binds			=> true
+			, instance_name	=> instance
+			, plan_stat		=> plans
+		);
+	end;
+
+	procedure session_off(
+		  sid		in number default null
+		, serial	in number default null
+	) as
+	begin
+		dbms_monitor.session_trace_disable(
+			  session_id => sid
+			, serial_num => serial
+		);
+	end;
+
+	procedure client_off(
+		  client in varchar2
+	) as
+	begin
+		dbms_monitor.client_id_trace_disable(
+			  client_id => client
+		);
+	end;
+
+	procedure sma_off(
+	  	  service	in varchar2
+		, module	in varchar2
+		, action	in varchar2 default '###ALL_ACTIONS'
+		, instance	in varchar2 default null
+	) as
+	begin
+		dbms_monitor.serv_mod_act_trace_disable(
+			  service_name	=> service
+			, module_name	=> module
+			, action_name	=> action
+			, instance_name	=> instance
+		);
+	end;
+
+	procedure database_off(
+		  instance in varchar2 default null
+	) as
+	begin
+		dbms_monitor.database_trace_disable(
+			  instance_name => instance
 		);
 	end;
 
@@ -255,7 +299,7 @@ exec mr.dev_trace.set_action('my-action')
 exec mr.dev_trace.set_client('my-client')
 
 exec mr.dev_trace.trace_begin
-select 'my business function goes here' from dual;
+select 'my business function goes here' message from dual;
 exec mr.dev_trace.trace_end
 
 var value varchar2(80)
@@ -266,6 +310,7 @@ exec :value := mr.dev_trace.get_client
 exec :value := mr.dev_trace.get_filename
 
 
+
 -- The following examples show mr.dba-trace in use.
 
 connect dba1/dba1
@@ -273,5 +318,12 @@ connect dba1/dba1
 set echo on
 set autoprint on
 set feedback off
+
+exec mr.dba_trace.session_on;
+select 'my program to diagnose goes here' message from dual;
+exec mr.dba_trace.session_off;
+exec :value := mr.dev_trace.get_filename;
+
+
 
 
