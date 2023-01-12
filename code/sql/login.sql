@@ -2,6 +2,6 @@
 
 set sqlformat default
 set heading off
-select 'Hello '||user||' from your login.sql' from dual;
-
 set sqlformat ansiconsole
+set pagesize 9999
+set sqlprompt "_user'@'_connect_identifier _privilege > "
