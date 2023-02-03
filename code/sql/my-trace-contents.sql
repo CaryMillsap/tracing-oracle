@@ -1,8 +1,8 @@
--- print trace contents
+-- print trace content
 
 -- Copyright (c) 2019, 2022 Method R Corporation
 
-select trim(trailing chr(10) from payload)
+select trim(trailing chr(10) from payload) "TRACE LINES"
 from v$diag_trace_file_contents
 where adr_home || '/trace/' || trace_filename = (
 	select tracefile
