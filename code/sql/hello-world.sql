@@ -1,23 +1,22 @@
 -- "hello, world", your first trace
 
 /*
-  This script will NOT run on an Oracle Autonomous Database system.
 
-  If you can connect as SYSTEM, then you won't need any additional grants to
-  run this script. Otherwise, if you connect as USERNAME, you'll need a DBA to
-  grant the following:
+This script will NOT run on an Oracle Autonomous Database system.
 
-    grant execute on dbms_session to USERNAME
-    grant alter session to USERNAME
+If you cannot connect as SYSTEM, then you'll need a DBA to grant the following:
+
+    grant execute on dbms_session to <username>
+    grant alter session to <username>
 
 */
 
 connect system
 
-exec dbms_session.session_trace_enable
+@trace-on
 select 'hello, world' from dual;
-exec dbms_session.session_trace_disable
+@trace-off
 
 @my-trace-file
-@my-trace-contents
+@my-trace-content
 
