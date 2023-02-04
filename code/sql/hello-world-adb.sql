@@ -1,4 +1,4 @@
--- "hello, world", your first trace (Autonomous mix)
+-- "hello, world", your first trace (Autonomous Database)
 
 /*
 
