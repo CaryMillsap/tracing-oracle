@@ -6,7 +6,7 @@ This script will ONLY run on an Oracle Autonomous Database system.
 
 If you cannot connect as ADMIN, then you'll need ADMIN to grant the following:
 
-    grant read on session_cloud trace to USERNAME
+    grant read on session_cloud trace to <username>
 
 */
 
