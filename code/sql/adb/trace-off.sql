@@ -1,4 +1,4 @@
--- disable tracing for my session (Autonomous Database)
+-- disable tracing for my session (ADB)
 
 alter session set sql_trace=false;
 

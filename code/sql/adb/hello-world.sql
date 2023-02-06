@@ -1,20 +1,19 @@
--- "hello, world", your first trace (Autonomous Database)
+-- "hello, world", your first trace (ADB)
 
 /*
 
 This script will ONLY run on an Oracle Autonomous Database system.
 
-If you cannot connect as ADMIN, then you'll need ADMIN to grant the following:
-
-    grant read on session_cloud trace to <username>
+See adb/dev-trace-permissions.sql for information about required privileges
+if you can't connect as ADMIN.
 
 */
 
-connect admin
+-- connect admin
 
-alter session set sql_trace=true;
+@adb/trace-on
 select 'hello, world' from dual;
-alter session set sql_trace=false;
+@adb/trace-off
 
-@my-adb-trace-content
+@adb/my-trace-content
 

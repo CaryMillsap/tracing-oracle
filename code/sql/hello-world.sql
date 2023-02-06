@@ -4,14 +4,12 @@
 
 This script will NOT run on an Oracle Autonomous Database system.
 
-If you cannot connect as SYSTEM, then you'll need a DBA to grant the following:
-
-    grant execute on dbms_session to <username>
-    grant alter session to <username>
+See (dba|dev)-trace-permissions.sql for information about required privileges
+if you can't connect as SYSTEM.
 
 */
 
-connect system
+-- connect system
 
 @trace-on
 select 'hello, world' from dual;
