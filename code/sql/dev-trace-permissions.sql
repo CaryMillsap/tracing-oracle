@@ -5,7 +5,7 @@ connect sys/oracle as sysdba
 
 -- Replace "dev1" with the schema name of your developer.
 drop user dev1 cascade;									-- Fresh start
-grant connect to dev1 identified by "Y0ur-Password-G0es-Here";
+create user dev1 identified by "Y0ur-Password-G0es-Here";
 grant create session to dev1;
 
 grant execute on sys.dbms_session to dev1;				-- Required to use dbms_session
@@ -25,10 +25,5 @@ connect dev1/Y0ur-Password-G0es-Here
 -- desc v$diag_trace_file_contents
 
 -- Full cycle: trace an application and access its content.
-@trace-on
-select 'testing!' from dual;
-@trace-off
-@my-trace-dir
-@my-trace-file
-@my-trace-content
+@hello-world
 
