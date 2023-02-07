@@ -7,7 +7,7 @@
 
 -- Copyright (c) 2022, 2023 Method R Corporation
 
-connect system/oracle as sysdba
+connect sys/oracle as sysdba
 
 show user
 
@@ -18,31 +18,28 @@ set feedback on
 
 -- User MR will own the packages.
 drop user mr cascade;
-create user mr identified by mr;
+create user mr;
 grant create session to mr;
-grant create procedure to mr;
 grant alter session to mr;
-grant execute on dbms_application_info to mr;
-grant execute on dbms_monitor to mr;
+grant create procedure to mr;
+grant execute on sys.dbms_application_info to mr;
+grant execute on sys.dbms_monitor to mr;
 
--- User DEV represents an application developer.
+-- User DEV1 represents an application developer.
 drop user dev1 cascade;
 create user dev1 identified by dev1;
 grant create session to dev1;
 
--- User DBADMIN represents a database administrator.
+-- User DBA1 represents a database administrator.
 drop user dba1 cascade;
 create user dba1 identified by dba1;
-grant create session to dba1;
-grant alter session to dba1;		-- Necessary for DBMS_MONITOR, DBMS_SESSION
+grant dba to dba1;
 
 
 
 -- Create the trace package for application developers.
 
-connect mr/mr
-
-create or replace package dev_trace authid definer as
+create or replace package mr.dev_trace authid definer as
 
 	procedure trace_begin	(binds in boolean default false, plans in varchar2 default 'first_execution', statistics_level in varchar2 default 'typical');
 	procedure trace_end		;
@@ -61,19 +58,20 @@ end dev_trace;
 /
 
 
-create or replace package body dev_trace as
+create or replace package body mr.dev_trace as
 
 	procedure trace_begin(
 		  binds				in boolean	default false
 		, plans				in varchar2	default 'first_execution'
 		, statistics_level	in varchar2	default 'typical'
 	) as
-		b varchar2( 5) := case binds when true then 'true' else 'false' end;
-		-- p varchar2(15) := case when plans is null then 'first_execution' else plans end;
+		b varchar2(5 char) := case binds when true then 'true' else 'false' end;
+		p dba_enabled_traces.plan_stats%type       := dbms_assert.qualified_sql_name(plans);
+		s v$statistics_level.activation_level%type := dbms_assert.qualified_sql_name(statistics_level);
 	begin
-		execute immediate 'alter session set statistics_level='||statistics_level;
+		execute immediate 'alter session set statistics_level='||s;
 		execute immediate 'alter session set max_dump_file_size=unlimited';
-		execute immediate 'alter session set events ''sql_trace wait=true,bind='||b||',plan_stat='||plans||'''';
+		execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||',plan_stat='||p||q'[']';
 	end;
 
 	procedure trace_end as
@@ -143,6 +141,8 @@ show errors
 
 
 -- Trace package for database administrators.
+
+-- #TODO Should I have an instance arg in the sesion_on and client_on procedures?
 
 create or replace package mr.dba_trace authid definer as
 
@@ -278,11 +278,11 @@ show errors
 
 -- Privileges.
 
-grant execute on dev_trace to dev1;
+grant execute on mr.dev_trace to dev1;
 -- User dev1 does not require ALTER SESSION system privilege.
 
-grant execute on dev_trace to dba1;
-grant execute on dba_trace to dba1;
+grant execute on mr.dev_trace to dba1;
+grant execute on mr.dba_trace to dba1;
 
 
 
