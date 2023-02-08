@@ -1,6 +1,7 @@
 -- demonstrate the permissions a developer needs for tracing (ADB)
 
 -- You must be ADMIN to perform the required trants.
+
 -- connect admin
 
 drop user dev1 cascade;						-- Fresh start
