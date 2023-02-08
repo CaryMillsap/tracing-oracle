@@ -11,6 +11,6 @@ grant dba to dba1;
 -- Connect for testing...
 connect dba1/Y0ur-Password-G0es-Here
 
--- Full cycle: trace an application and access its content.
+-- Trace an application and access its content.
 @hello-world
 

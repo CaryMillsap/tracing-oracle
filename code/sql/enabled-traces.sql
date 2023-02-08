@@ -6,16 +6,16 @@
 -- - dbms_monitor.database_trace_enable
 
 select
-	instance_name,
-	trace_type,
-	primary_id,
-	qualifier_id1,
-	qualifier_id2,
-	waits,
-	binds,
-	plan_stats
+     instance_name
+   , trace_type,
+   , primary_id
+   , qualifier_id1
+   , qualifier_id2
+   , waits
+   , binds
+   , plan_stats
 from
-	dba_enabled_traces
+   dba_enabled_traces
 /
 
 
