@@ -4,13 +4,13 @@
 connect sys/oracle as sysdba
 
 -- Replace "dba1" with the schema name of your DBA.
-drop user dba1 cascade;                                 -- Fresh start
+drop user dba1 cascade;                                     -- Fresh start
 create user dba1 identified by "Y0ur-Password-G0es-Here";
 grant dba to dba1;
 
 -- Connect for testing...
 connect dba1/Y0ur-Password-G0es-Here
 
--- Trace an application and access its content.
+-- Trace an application and view the trace content.
 @hello-world
 
