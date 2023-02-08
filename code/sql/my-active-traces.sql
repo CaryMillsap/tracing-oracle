@@ -14,5 +14,6 @@ select
 from
    v$session
 where
-   sid = sys_context('userenv','sid');
+   sid = sys_context('userenv','sid')
+/
 
