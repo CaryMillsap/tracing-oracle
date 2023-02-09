@@ -19,7 +19,7 @@ from
 /
 
 
--- Note that this will report only upon traces enabled with oradebug.
+-- Note that this command (below) will report only upon traces enabled with oradebug.
 
 -- oradebug setmypid
 -- oradebug eventdump system
