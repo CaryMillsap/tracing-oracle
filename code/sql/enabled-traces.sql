@@ -7,7 +7,7 @@
 
 select
      instance_name
-   , trace_type,
+   , trace_type
    , primary_id
    , qualifier_id1
    , qualifier_id2
