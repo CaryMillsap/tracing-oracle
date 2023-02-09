@@ -9,50 +9,42 @@
 
 connect sys/oracle as sysdba
 
-show user
-
-set termout on
-set echo off
-set autoprint off
-set feedback on
-
--- User MR will own the packages.
-drop user mr cascade;
+-- User MR (Method R) will own the packages.
+drop user mr cascade;                                       -- Fresh start
 create user mr;
-grant create session to mr;
-grant alter session to mr;
-grant create procedure to mr;
-grant execute on sys.dbms_application_info to mr;
-grant execute on sys.dbms_monitor to mr;
-
--- User DEV1 represents an application developer.
-drop user dev1 cascade;
-create user dev1 identified by dev1;
-grant create session to dev1;
-
--- User DBA1 represents a database administrator.
-drop user dba1 cascade;
-create user dba1 identified by dba1;
-grant dba to dba1;
-
+-- create user mr identified by mr;
+-- grant create session to mr;
+-- grant create procedure to mr;
+grant alter session                                to mr;
+grant execute  on sys.dbms_application_info        to mr;
+grant execute  on sys.dbms_monitor                 to mr;
+grant read     on sys.dba_enabled_traces           to mr;
+grant read     on sys.v_$statistics_level          to mr;
+grant read     on sys.v_$diag_info                 to mr;
+grant read     on sys.v_$diag_trace_file_contents  to mr;      -- #TODO not used yet
 
 
 -- Create the trace package for application developers.
 
 create or replace package mr.dev_trace authid definer as
 
-   procedure trace_begin   (binds in boolean default false, plans in varchar2 default 'first_execution', statistics_level in varchar2 default 'typical');
-   procedure trace_end     ;
+   procedure trace_begin(
+        binds  in boolean  default false
+      , plans  in varchar2 default 'first_execution'
+      , stats  in varchar2 default 'typical'
+   );
+   procedure trace_end;
 
-   procedure set_module (module in varchar2 default null);
-   procedure set_action (action in varchar2 default null);
-   procedure set_client (client in varchar2 default null);
+   procedure set_module(module in varchar2 default null);
+   procedure set_action(action in varchar2 default null);
+   procedure set_client(client in varchar2 default null);
    
    function get_service    return varchar2;
    function get_module     return varchar2;
    function get_action     return varchar2;
    function get_client     return varchar2;
    function get_filename   return varchar2;
+   -- function get_content return ???;       -- #TODO return what?
 
 end dev_trace;
 /
@@ -61,22 +53,28 @@ end dev_trace;
 create or replace package body mr.dev_trace as
 
    procedure trace_begin(
-        binds              in boolean  default false
-      , plans              in varchar2 default 'first_execution'
-      , statistics_level   in varchar2 default 'typical'
+        binds   in boolean  default false
+      , plans   in varchar2 default 'first_execution'
+      , stats   in varchar2 default 'typical'
    ) as
-      b varchar2(5 char) := case binds when true then 'true' else 'false' end;
-      p dba_enabled_traces.plan_stats%type       := dbms_assert.qualified_sql_name(plans);
-      s v$statistics_level.activation_level%type := dbms_assert.qualified_sql_name(statistics_level);
+      b varchar2( 5 char) := case binds when true then 'true' else 'false' end;
+      p varchar2(32 char) := dbms_assert.qualified_sql_name(plans);
+      -- p sys.dba_enabled_traces.plan_stats%type        := dbms_assert.qualified_sql_name(plans);
+      -- Oracle defect: astonishingly, sys.dba_enabled_traces.plan_stats%type...
+      -- 1. is called plan_statS (instead of plan_stat, like the argument)
+      -- 2. is big enough to store only the string 'FIRST_EXEC' (and not 'FIRST_EXECUTION')
+      s varchar2(32 char) := dbms_assert.qualified_sql_name(stats);
+      -- s sys.v_$statistics_level.activation_level%type := dbms_assert.qualified_sql_name(stats);
+      -- Should use the %type specification, but it's hard to trust it after seeing dba_enabled_traces.
    begin
-      execute immediate 'alter session set statistics_level='||s;
-      execute immediate 'alter session set max_dump_file_size=unlimited';
-      execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||',plan_stat='||p||q'[']';
+      execute immediate q'[alter session set max_dump_file_size=unlimited]';
+      execute immediate q'[alter session set statistics_level=]'||s;
+      execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||q'[,plan_stat=]'||p||q'[']';
    end;
 
    procedure trace_end as
    begin
-      execute immediate 'alter session set events ''sql_trace off''';
+      execute immediate q'[alter session set events 'sql_trace off']';
    end;
 
    procedure set_module(
@@ -97,13 +95,13 @@ create or replace package body mr.dev_trace as
         client in varchar2 default null
    ) as
    begin
-      dbms_session.set_identifier(client_id=>client);
+      dbms_session.set_identifier(client_id=>client);    -- Bizarre that it's not dbms_application_info.
    end;
 
    function get_service return varchar2
    as
    begin
-      return sys_context('userenv','service_name');
+      return sys_context('userenv','service_name');      -- Bizarre that "_name" is in the name.
    end;
 
    function get_module return varchar2
@@ -126,7 +124,7 @@ create or replace package body mr.dev_trace as
 
    function get_filename return varchar2
    as
-      f varchar2(1024);
+      f sys.v_$diag_info.value%type;
    begin
       select value into f from v$diag_info where name='Default Trace File';
       return f;
@@ -134,6 +132,7 @@ create or replace package body mr.dev_trace as
 
 end dev_trace;
 /
+
 show errors
 
 
@@ -142,19 +141,49 @@ show errors
 
 -- Trace package for database administrators.
 
--- #TODO Should I have an instance arg in the sesion_on and client_on procedures?
-
 create or replace package mr.dba_trace authid definer as
 
-   procedure session_on    (sid in number default null, serial in number default null,                                                       binds in boolean default false, plans in varchar2 default 'first_execution');
-   procedure client_on     (client  in varchar2,                                                                                             binds in boolean default false, plans in varchar2 default 'first_execution');
-   procedure sma_on        (service in varchar2, module in varchar2 default '###ALL_MODULES', action in varchar2 default '###ALL_ACTIONS',   binds in boolean default false, plans in varchar2 default 'first_execution', instance in varchar2 default null);
-   procedure database_on   (                                                                                                                 binds in boolean default false, plans in varchar2 default 'first_execution', instance in varchar2 default null);
+   procedure session_on(
+        sid       in number   default null
+      , serial    in number   default null
+      , binds     in boolean  default false
+      , plans     in varchar2 default 'first_execution'
+   );
+   procedure client_on(
+        client    in varchar2
+      , binds     in boolean  default false
+      , plans     in varchar2 default 'first_execution'
+   );
+   procedure sma_on(
+        service   in varchar2 default sys_context('userenv','service_name')
+      , module    in varchar2 default '###ALL_MODULES'      -- #TODO don't hard-code this constant
+      , action    in varchar2 default '###ALL_ACTIONS'      -- #TODO don't hard-code this constant
+      , binds     in boolean  default false
+      , plans     in varchar2 default 'first_execution'
+      , instance  in varchar2 default null
+   );
+   procedure database_on(
+        binds     in boolean  default false
+      , plans     in varchar2 default 'first_execution'
+      , instance  in varchar2 default null
+   );
 
-   procedure session_off   (sid in number default null, serial in number default null);
-   procedure client_off    (client in varchar2);
-   procedure sma_off       (service in varchar2, module in varchar2, action in varchar2 default '###ALL_ACTIONS', instance in varchar2 default null);
-   procedure database_off  (instance in varchar2 default null);
+   procedure session_off(
+        sid       in number   default null
+      , serial    in number   default null
+   );
+   procedure client_off(
+        client    in varchar2
+   );
+   procedure sma_off(
+        service   in varchar2 default sys_context('userenv','service_name')
+      , module    in varchar2 default '###ALL_MODULES'      -- #TODO don't hard-code this constant
+      , action    in varchar2 default '###ALL_ACTIONS'      -- #TODO don't hard-code this constant
+      , instance  in varchar2 default null
+   );
+   procedure database_off(
+        instance in varchar2 default null
+   );
 
 end dba_trace;
 /
@@ -163,8 +192,8 @@ end dba_trace;
 create or replace package body mr.dba_trace  as
 
    procedure session_on(
-        sid    in number   default null
-      , serial in number   default null
+        sid       in number   default null
+      , serial    in number   default null
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
    ) as
@@ -179,7 +208,7 @@ create or replace package body mr.dba_trace  as
    end;
 
    procedure client_on(
-        client in varchar2
+        client    in varchar2
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
    ) as
@@ -193,22 +222,27 @@ create or replace package body mr.dba_trace  as
    end;
 
    procedure sma_on(
-        service   in varchar2
-      , module    in varchar2 default '###ALL_MODULES'
-      , action    in varchar2 default '###ALL_ACTIONS'
+        service   in varchar2 default sys_context('userenv','service_name')
+      , module    in varchar2 default '###ALL_MODULES'      -- #TODO don't hard-code this constant
+      , action    in varchar2 default '###ALL_ACTIONS'      -- #TODO don't hard-code this constant
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
    ) as
+      s varchar2(32) := dbms_assert.qualified_sql_name(service);   -- #TODO %type
+      m varchar2(32) := dbms_assert.qualified_sql_name(module);    -- #TODO %type
+      a varchar2(32) := dbms_assert.qualified_sql_name(action);    -- #TODO %type
+      p varchar2(32) := dbms_assert.qualified_sql_name(plans);     -- #TODO %type
+      i varchar2(32) := dbms_assert.qualified_sql_name(instance);  -- #TODO %type
    begin
       dbms_monitor.serv_mod_act_trace_enable(
-           service_name    => service
-         , module_name     => module
-         , action_name     => action
+           service_name    => s
+         , module_name     => m
+         , action_name     => a
          , waits           => true
-         , binds           => true
-         , instance_name   => instance
-         , plan_stat       => plans
+         , binds           => binds
+         , instance_name   => i
+         , plan_stat       => p
       );
    end;
 
@@ -217,12 +251,14 @@ create or replace package body mr.dba_trace  as
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
    ) as
+      p varchar2(32) := dbms_assert.qualified_sql_name(plans);       -- #TODO %type
+      i varchar2(32) := dbms_assert.qualified_sql_name(instance);    -- #TODO %type
    begin
       dbms_monitor.database_trace_enable(
            waits           => true
-         , binds           => true
-         , instance_name   => instance
-         , plan_stat       => plans
+         , binds           => binds
+         , instance_name   => i
+         , plan_stat       => p
       );
    end;
 
@@ -247,8 +283,8 @@ create or replace package body mr.dba_trace  as
    end;
 
    procedure sma_off(
-        service   in varchar2
-      , module    in varchar2
+        service   in varchar2 default sys_context('userenv','service_name')
+      , module    in varchar2 default '###ALL_MODULES'
       , action    in varchar2 default '###ALL_ACTIONS'
       , instance  in varchar2 default null
    ) as
@@ -272,58 +308,7 @@ create or replace package body mr.dba_trace  as
 
 end dba_trace;
 /
+
 show errors
-
-
-
--- Privileges.
-
-grant execute on mr.dev_trace to dev1;
--- User dev1 does not require ALTER SESSION system privilege.
-
-grant execute on mr.dev_trace to dba1;
-grant execute on mr.dba_trace to dba1;
-
-
-
--- The following examples show mr.dev-trace in use.
-
-connect dev1/dev1
-
-set echo on
-set autoprint on
-set feedback off
-
-exec mr.dev_trace.set_module('my-module')
-exec mr.dev_trace.set_action('my-action')
-exec mr.dev_trace.set_client('my-client')
-
-exec mr.dev_trace.trace_begin
-select 'my business function goes here' message from dual;
-exec mr.dev_trace.trace_end
-
-var value varchar2(80)
-exec :value := mr.dev_trace.get_service
-exec :value := mr.dev_trace.get_module
-exec :value := mr.dev_trace.get_action
-exec :value := mr.dev_trace.get_client
-exec :value := mr.dev_trace.get_filename
-
-
-
--- The following examples show mr.dba-trace in use.
-
-connect dba1/dba1
-
-set echo on
-set autoprint on
-set feedback off
-
-exec mr.dba_trace.session_on;
-select 'my program to diagnose goes here' message from dual;
-exec mr.dba_trace.session_off;
-exec :value := mr.dev_trace.get_filename;
-
-
 
 
