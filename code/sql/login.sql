@@ -1,6 +1,6 @@
 -- execute upon SQLcl startup
 
-set sqlformat default
+-- set sqlformat default
 set heading off
 set sqlformat ansiconsole
 set pagesize 9999
