@@ -226,16 +226,11 @@ create or replace package body mr.dba_trace  as
    procedure sma_on(
         service   in varchar2 default sys_context('userenv','service_name')
       , module    in varchar2 default dbms_monitor.all_modules
-      , action    in varchar2 default dbms_monitor.all_actions      -- #TODO don't hard-code this constant
+      , action    in varchar2 default dbms_monitor.all_actions
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
    ) as
-      -- s varchar2(64) := dbms_assert.enquote_literal(service);   -- #TODO %type
-      -- m varchar2(64) := dbms_assert.enquote_literal(module);    -- #TODO %type
-      -- a varchar2(64) := dbms_assert.enquote_literal(action);    -- #TODO %type
-      -- p varchar2(64) := dbms_assert.enquote_literal(plans);     -- #TODO %type
-      -- i varchar2(64) := dbms_assert.enquote_literal(instance);  -- #TODO %type
    begin
       dbms_monitor.serv_mod_act_trace_enable(
            service_name    => service
@@ -253,14 +248,12 @@ create or replace package body mr.dba_trace  as
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
    ) as
-      p varchar2(64) := dbms_assert.simple_sql_name(plans);       -- #TODO %type
-      i varchar2(64) := dbms_assert.simple_sql_name(instance);    -- #TODO %type
    begin
       dbms_monitor.database_trace_enable(
            waits           => true
          , binds           => binds
-         , instance_name   => i
-         , plan_stat       => p
+         , instance_name   => intance
+         , plan_stat       => plans
       );
    end;
 
