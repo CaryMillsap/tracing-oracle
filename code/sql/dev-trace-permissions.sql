@@ -3,8 +3,6 @@
 -- You must be SYSDBA to perform the required grants.
 connect sys/oracle as sysdba
 
-set feedback on
-select 'hello' from dual;
 
 -- Create role "mrdev", the Method R-endowed application developer.
 drop role mrdev;                                            -- Fresh start
@@ -14,7 +12,7 @@ create role mrdev;                                          -- The Method R-endo
    -- grant execute on sys.dbms_application_info to mrdev;     -- Required to set Oracle user session handle attributes
    -- grant read on sys.v_$diag_info to mrdev;                 -- Not required, but symmetrical
    -- grant read on sys.v_$diag_trace_file to mrdev;           -- Nice to have, but not used by any tracing-oracle scripts
-   -- grant read on sys.v_$diag_trace_file_contents to mrdev;  -- Required to read trace file content
+      grant read on sys.v_$diag_trace_file_contents to mrdev;  -- Required to read trace file content
    -- grant alter session to mrdev;                            -- Required to use dbms_session.session_trace_enable (authid current_user)
 
 
@@ -55,9 +53,12 @@ set autoprint off
 
 -- Test tracing.
 exec mr.dev_trace.trace_begin
-select 'the business function I wrote goes here' message from dual;
+col sd new_value sd
+select to_char(sysdate,'YYYY-MM-DD HH24:MI:SS') sd from dual;        -- Unique timestamp to validate trace file content
+select 'The program I''m writing ran at &sd' message from dual;      -- This is where your application being traced would go
 exec mr.dev_trace.trace_end
--- exec mr.dev_trace.get_content
+@my-trace-content                   -- #TODO delete this line when mr.dev_trace.get_content is written
+-- exec mr.dev_trace.get_content    -- #TODO not written yet
 
 
 
@@ -66,14 +67,16 @@ connect dba1/Y0ur-Password-G0es-Here
 
 -- Test trace enablers.
 @enabled-traces
-exec mr.dba_trace.sma_on(module=>'cary-module', action=>'cary-action');
-exec mr.dba_trace.
+exec mr.dba_trace.sma_on(module=>'cary_module', action=>'cary_action');
 @enabled-traces
-exec mr.dba_trace.sma_off(module=>'cary-module', action=>'cary-action');
+exec mr.dba_trace.sma_off(module=>'cary_module', action=>'cary_action');
 @enabled-traces
 
 -- Test tracing.
 exec mr.dba_trace.session_on;
+col sd new_value sd
+select to_char(sysdate,'YYYY-MM-DD HH24:MI:SS') sd from dual;        -- Unique timestamp to validate trace file content
+select 'The program I''m diagnosing ran at &sd' message from dual;   -- This is where your application being traced would go
 select 'my program to diagnose goes here' message from dual;
 exec mr.dba_trace.session_off;
 @my-trace-content

@@ -7,16 +7,18 @@
 
 -- Copyright (c) 2022, 2023 Method R Corporation
 
+
 connect sys/oracle as sysdba
 
 -- User MR (Method R) will own the packages.
 drop user mr cascade;                                       -- Fresh start
 create user mr;
--- create user mr identified by mr;
+-- create user mr identified by mr;                         -- No need to actually connect as MR
 -- grant create session to mr;
 -- grant create procedure to mr;
-grant alter session                                to mr;
+grant alter session                                to mr;   -- Required to use dbms_session.session_trace_enable
 grant execute  on sys.dbms_application_info        to mr;
+grant execute  on sys.dbms_session                 to mr;
 grant execute  on sys.dbms_monitor                 to mr;
 grant read     on sys.dba_enabled_traces           to mr;
 grant read     on sys.v_$statistics_level          to mr;
@@ -58,13 +60,13 @@ create or replace package body mr.dev_trace as
       , stats   in varchar2 default 'typical'
    ) as
       b varchar2( 5 char) := case binds when true then 'true' else 'false' end;
-      p varchar2(32 char) := dbms_assert.qualified_sql_name(plans);
-      -- p sys.dba_enabled_traces.plan_stats%type        := dbms_assert.qualified_sql_name(plans);
+      p varchar2(64 char) := dbms_assert.simple_sql_name(plans);
+      -- p sys.dba_enabled_traces.plan_stats%type        := dbms_assert.simple_sql_name(plans);
       -- Oracle defect: astonishingly, sys.dba_enabled_traces.plan_stats%type...
       -- 1. is called plan_statS (instead of plan_stat, like the argument)
       -- 2. is big enough to store only the string 'FIRST_EXEC' (and not 'FIRST_EXECUTION')
-      s varchar2(32 char) := dbms_assert.qualified_sql_name(stats);
-      -- s sys.v_$statistics_level.activation_level%type := dbms_assert.qualified_sql_name(stats);
+      s varchar2(64 char) := dbms_assert.simple_sql_name(stats);
+      -- s sys.v_$statistics_level.activation_level%type := dbms_assert.simple_sql_name(stats);
       -- Should use the %type specification, but it's hard to trust it after seeing dba_enabled_traces.
    begin
       execute immediate q'[alter session set max_dump_file_size=unlimited]';
@@ -156,8 +158,8 @@ create or replace package mr.dba_trace authid definer as
    );
    procedure sma_on(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default '###ALL_MODULES'      -- #TODO don't hard-code this constant
-      , action    in varchar2 default '###ALL_ACTIONS'      -- #TODO don't hard-code this constant
+      , module    in varchar2 default dbms_monitor.all_modules
+      , action    in varchar2 default dbms_monitor.all_actions
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
@@ -177,8 +179,8 @@ create or replace package mr.dba_trace authid definer as
    );
    procedure sma_off(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default '###ALL_MODULES'      -- #TODO don't hard-code this constant
-      , action    in varchar2 default '###ALL_ACTIONS'      -- #TODO don't hard-code this constant
+      , module    in varchar2 default dbms_monitor.all_modules
+      , action    in varchar2 default dbms_monitor.all_actions
       , instance  in varchar2 default null
    );
    procedure database_off(
@@ -223,26 +225,26 @@ create or replace package body mr.dba_trace  as
 
    procedure sma_on(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default '###ALL_MODULES'      -- #TODO don't hard-code this constant
-      , action    in varchar2 default '###ALL_ACTIONS'      -- #TODO don't hard-code this constant
+      , module    in varchar2 default dbms_monitor.all_modules
+      , action    in varchar2 default dbms_monitor.all_actions      -- #TODO don't hard-code this constant
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
    ) as
-      s varchar2(32) := dbms_assert.qualified_sql_name(service);   -- #TODO %type
-      m varchar2(32) := dbms_assert.qualified_sql_name(module);    -- #TODO %type
-      a varchar2(32) := dbms_assert.qualified_sql_name(action);    -- #TODO %type
-      p varchar2(32) := dbms_assert.qualified_sql_name(plans);     -- #TODO %type
-      i varchar2(32) := dbms_assert.qualified_sql_name(instance);  -- #TODO %type
+      -- s varchar2(64) := dbms_assert.enquote_literal(service);   -- #TODO %type
+      -- m varchar2(64) := dbms_assert.enquote_literal(module);    -- #TODO %type
+      -- a varchar2(64) := dbms_assert.enquote_literal(action);    -- #TODO %type
+      -- p varchar2(64) := dbms_assert.enquote_literal(plans);     -- #TODO %type
+      -- i varchar2(64) := dbms_assert.enquote_literal(instance);  -- #TODO %type
    begin
       dbms_monitor.serv_mod_act_trace_enable(
-           service_name    => s
-         , module_name     => m
-         , action_name     => a
+           service_name    => service
+         , module_name     => module
+         , action_name     => action
          , waits           => true
          , binds           => binds
-         , instance_name   => i
-         , plan_stat       => p
+         , instance_name   => instance
+         , plan_stat       => plans
       );
    end;
 
@@ -251,8 +253,8 @@ create or replace package body mr.dba_trace  as
       , plans     in varchar2 default 'first_execution'
       , instance  in varchar2 default null
    ) as
-      p varchar2(32) := dbms_assert.qualified_sql_name(plans);       -- #TODO %type
-      i varchar2(32) := dbms_assert.qualified_sql_name(instance);    -- #TODO %type
+      p varchar2(64) := dbms_assert.simple_sql_name(plans);       -- #TODO %type
+      i varchar2(64) := dbms_assert.simple_sql_name(instance);    -- #TODO %type
    begin
       dbms_monitor.database_trace_enable(
            waits           => true
@@ -284,8 +286,8 @@ create or replace package body mr.dba_trace  as
 
    procedure sma_off(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default '###ALL_MODULES'
-      , action    in varchar2 default '###ALL_ACTIONS'
+      , module    in varchar2 default dbms_monitor.all_modules
+      , action    in varchar2 default dbms_monitor.all_actions
       , instance  in varchar2 default null
    ) as
    begin
