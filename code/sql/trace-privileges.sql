@@ -13,7 +13,7 @@ create role mrdev;                                          -- The Method R-endo
    -- grant execute on sys.dbms_application_info to mrdev;     -- Required to set Oracle user session handle attributes
    -- grant read on sys.v_$diag_info to mrdev;                 -- Not required, but symmetrical
    -- grant read on sys.v_$diag_trace_file to mrdev;           -- Nice to have, but not used by any tracing-oracle scripts
-      grant read on sys.v_$diag_trace_file_contents to mrdev;  -- Required to read trace file content
+      grant read on sys.v_$diag_trace_file_contents to mrdev;  -- Required to read trace file content #TODO remove this when mr.dev_trace.get_contents is done
    -- grant alter session to mrdev;                            -- Required to use dbms_session.session_trace_enable (authid current_user)
 
 
