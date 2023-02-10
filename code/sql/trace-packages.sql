@@ -252,7 +252,7 @@ create or replace package body mr.dba_trace  as
       dbms_monitor.database_trace_enable(
            waits           => true
          , binds           => binds
-         , instance_name   => intance
+         , instance_name   => instance
          , plan_stat       => plans
       );
    end;
