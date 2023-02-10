@@ -1,4 +1,5 @@
--- demonstrate the permissions a developer needs for tracing
+-- demonstrate the privileges a developer needs for tracing
+
 
 -- You must be SYSDBA to perform the required grants.
 connect sys/oracle as sysdba
