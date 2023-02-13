@@ -68,9 +68,9 @@ connect dba1/Y0ur-Password-G0es-Here
 
 -- Test trace enablers.
 @enabled-traces
-exec mr.dba_trace.sma_on(module=>'cary_module', action=>'cary_action');
+exec mr.dba_trace.handle_on(module=>'cary_module', action=>'cary_action');
 @enabled-traces
-exec mr.dba_trace.sma_off(module=>'cary_module', action=>'cary_action');
+exec mr.dba_trace.handle_off(module=>'cary_module', action=>'cary_action');
 @enabled-traces
 
 -- Test tracing.

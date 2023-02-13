@@ -23,6 +23,8 @@ grant execute  on sys.dbms_monitor                 to mr;
 grant read     on sys.dba_enabled_traces           to mr;
 grant read     on sys.v_$statistics_level          to mr;
 grant read     on sys.v_$diag_info                 to mr;
+grant read     on sys.v_$instance                  to mr;
+grant read     on sys.v_$session                   to mr;
 grant read     on sys.v_$diag_trace_file_contents  to mr;      -- #TODO not used yet
 
 
@@ -145,46 +147,50 @@ show errors
 
 create or replace package mr.dba_trace authid definer as
 
+   all_modules    sys.v_$session.module%type          := dbms_monitor.all_modules;
+   all_actions    sys.v_$session.action%type          := dbms_monitor.all_actions;
+   all_instances  sys.v_$instance.instance_name%type  := null;
+
    procedure session_on(
-        sid       in number   default null
-      , serial    in number   default null
-      , binds     in boolean  default false
-      , plans     in varchar2 default 'first_execution'
+        sid       in binary_integer default null
+      , serial    in binary_integer default null
+      , binds     in boolean        default false
+      , plans     in varchar2       default 'first_execution'
    );
    procedure client_on(
         client    in varchar2
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
    );
-   procedure sma_on(
+   procedure handle_on(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default dbms_monitor.all_modules
-      , action    in varchar2 default dbms_monitor.all_actions
+      , module    in varchar2 default all_modules
+      , action    in varchar2 default all_actions
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
-      , instance  in varchar2 default null
+      , instance  in varchar2 default all_instances
    );
    procedure database_on(
         binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
-      , instance  in varchar2 default null
+      , instance  in varchar2 default all_instances
    );
 
    procedure session_off(
-        sid       in number   default null
-      , serial    in number   default null
+        sid       in binary_integer default null
+      , serial    in binary_integer default null
    );
    procedure client_off(
         client    in varchar2
    );
-   procedure sma_off(
+   procedure handle_off(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default dbms_monitor.all_modules
-      , action    in varchar2 default dbms_monitor.all_actions
-      , instance  in varchar2 default null
+      , module    in varchar2 default all_modules
+      , action    in varchar2 default all_actions
+      , instance  in varchar2 default all_instances
    );
    procedure database_off(
-        instance in varchar2 default null
+        instance in varchar2 default all_instances
    );
 
 end dba_trace;
@@ -194,10 +200,10 @@ end dba_trace;
 create or replace package body mr.dba_trace  as
 
    procedure session_on(
-        sid       in number   default null
-      , serial    in number   default null
-      , binds     in boolean  default false
-      , plans     in varchar2 default 'first_execution'
+        sid       in binary_integer default null
+      , serial    in binary_integer default null
+      , binds     in boolean        default false
+      , plans     in varchar2       default 'first_execution'
    ) as
    begin
       dbms_monitor.session_trace_enable(
@@ -223,13 +229,13 @@ create or replace package body mr.dba_trace  as
       );
    end;
 
-   procedure sma_on(
+   procedure handle_on(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default dbms_monitor.all_modules
-      , action    in varchar2 default dbms_monitor.all_actions
+      , module    in varchar2 default all_modules
+      , action    in varchar2 default all_actions
       , binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
-      , instance  in varchar2 default null
+      , instance  in varchar2 default all_instances
    ) as
    begin
       dbms_monitor.serv_mod_act_trace_enable(
@@ -246,7 +252,7 @@ create or replace package body mr.dba_trace  as
    procedure database_on(
         binds     in boolean  default false
       , plans     in varchar2 default 'first_execution'
-      , instance  in varchar2 default null
+      , instance  in varchar2 default all_instances
    ) as
    begin
       dbms_monitor.database_trace_enable(
@@ -258,8 +264,8 @@ create or replace package body mr.dba_trace  as
    end;
 
    procedure session_off(
-        sid    in number default null
-      , serial in number default null
+        sid    in binary_integer default null
+      , serial in binary_integer default null
    ) as
    begin
       dbms_monitor.session_trace_disable(
@@ -277,11 +283,11 @@ create or replace package body mr.dba_trace  as
       );
    end;
 
-   procedure sma_off(
+   procedure handle_off(
         service   in varchar2 default sys_context('userenv','service_name')
-      , module    in varchar2 default dbms_monitor.all_modules
-      , action    in varchar2 default dbms_monitor.all_actions
-      , instance  in varchar2 default null
+      , module    in varchar2 default all_modules
+      , action    in varchar2 default all_actions
+      , instance  in varchar2 default all_instances
    ) as
    begin
       dbms_monitor.serv_mod_act_trace_disable(
@@ -293,7 +299,7 @@ create or replace package body mr.dba_trace  as
    end;
 
    procedure database_off(
-        instance in varchar2 default null
+        instance in varchar2 default all_instances
    ) as
    begin
       dbms_monitor.database_trace_disable(
