@@ -56,7 +56,7 @@ set autoprint off
 exec mr.dev_trace.trace_begin
 col sd new_value sd
 select to_char(sysdate,'YYYY-MM-DD HH24:MI:SS') sd from dual;        -- Unique timestamp to validate trace file content
-select 'The program I''m writing ran at &sd' message from dual;      -- This is where your application being traced would go
+select q'[The program I'm writing ran at &sd]' message from dual;    -- This is where your application being traced would go
 exec mr.dev_trace.trace_end
 @my-trace-content                   -- #TODO delete this line when mr.dev_trace.get_content is written
 -- exec mr.dev_trace.get_content    -- #TODO not written yet
@@ -77,8 +77,7 @@ exec mr.dba_trace.handle_off(module=>'cary_module', action=>'cary_action');
 exec mr.dba_trace.session_on;
 col sd new_value sd
 select to_char(sysdate,'YYYY-MM-DD HH24:MI:SS') sd from dual;        -- Unique timestamp to validate trace file content
-select 'The program I''m diagnosing ran at &sd' message from dual;   -- This is where your application being traced would go
-select 'my program to diagnose goes here' message from dual;
+select q'[The program I'm diagnosing ran at &sd]' message from dual; -- This is where your application being traced would go
 exec mr.dba_trace.session_off;
 @my-trace-content
 
