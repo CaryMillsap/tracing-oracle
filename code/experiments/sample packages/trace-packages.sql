@@ -20,6 +20,7 @@ grant alter session                                to mr;   -- Required to use d
 grant execute  on sys.dbms_application_info        to mr;
 grant execute  on sys.dbms_session                 to mr;
 grant execute  on sys.dbms_monitor                 to mr;
+grant execute  on sys.dbms_assert                  to mr;
 grant read     on sys.dba_enabled_traces           to mr;
 grant read     on sys.v_$statistics_level          to mr;
 grant read     on sys.v_$diag_info                 to mr;
