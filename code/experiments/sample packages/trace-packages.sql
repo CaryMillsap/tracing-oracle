@@ -62,7 +62,7 @@ create or replace package body mr.dev_trace as
       , plans   in varchar2 default 'first_execution'
       , stats   in varchar2 default 'typical'
    ) as
-      b varchar2( 5 char) := case binds when true then 'true' else 'false' end;
+      b varchar2( 5 char) := case when binds then 'true' else 'false' end;
       p varchar2(64 char) := dbms_assert.simple_sql_name(plans);
       -- p sys.dba_enabled_traces.plan_stats%type        := dbms_assert.simple_sql_name(plans);
       -- Oracle defect: astonishingly, sys.dba_enabled_traces.plan_stats%type...
