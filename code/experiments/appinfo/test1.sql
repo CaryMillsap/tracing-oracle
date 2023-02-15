@@ -4,6 +4,10 @@
 
 set appinfo on
 
+-- Note that if we use @my-handles instead of the select statement below, then
+-- the script name part of the MODULE name will always be my-handles.sql, which
+-- is not what we want.
+
 select sys_context('userenv','service_name')||'/'||sys_context('userenv','module')||'/'||sys_context('userenv','action') "service/module/action" from dual;
 @test2
 select sys_context('userenv','service_name')||'/'||sys_context('userenv','module')||'/'||sys_context('userenv','action') "service/module/action" from dual;
