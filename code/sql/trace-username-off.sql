@@ -1,5 +1,7 @@
 -- disable tracing for all USERNAME=&1 sessions
 
+-- #TODO needs testing
+
 -- Copyright (c) 2019, 2022 Method R Corporation
 
 -- Stop tracing new sessions.
@@ -11,5 +13,5 @@ begin
       dbms_monitor.session_trace_disable(r.sid, r.serial#);
    end loop;
 end;
-
+/
 

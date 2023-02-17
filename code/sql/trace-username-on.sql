@@ -1,5 +1,7 @@
 -- enable tracing for all USERNAME=&1 sessions
 
+-- #TODO needs testing
+
 -- Copyright (c) 2019, 2022 Method R Corporation
 
 -- Enable tracing for any new USERNAME session.
@@ -9,6 +11,7 @@ begin
    dbms_session.session_trace_enable;
    exception when others then null;
 end;
+/
 
 -- Enable tracing for all existing USERNAME sessions.
 begin
@@ -16,4 +19,5 @@ begin
       dbms_monitor.session_trace_enable(r.sid, r.serial#);
    end loop;
 end;
+/
 
