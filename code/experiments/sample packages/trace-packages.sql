@@ -65,12 +65,27 @@ create or replace package body mr.dev_trace as
       b varchar2( 5 char) := case when binds then 'true' else 'false' end;
       p varchar2(64 char) := dbms_assert.simple_sql_name(plans);
       -- p sys.dba_enabled_traces.plan_stats%type        := dbms_assert.simple_sql_name(plans);
+
       -- Oracle defect: astonishingly, sys.dba_enabled_traces.plan_stats%type...
       -- 1. is called plan_statS (instead of plan_stat, like the argument)
       -- 2. is big enough to store only the string 'FIRST_EXEC' (and not 'FIRST_EXECUTION')
+      
       s varchar2(64 char) := dbms_assert.simple_sql_name(stats);
       -- s sys.v_$statistics_level.activation_level%type := dbms_assert.simple_sql_name(stats);
-      -- Should use the %type specification, but it's hard to trust it after seeing dba_enabled_traces.
+
+      -- Should use the %type specification here, but it's hard to trust it
+      -- after seeing dba_enabled_traces.
+
+      -- Oracle defect: It would have been so much cleaner to call
+      -- DBMS_SESSION.SESSION_TRACE_ENABLE here. But we cannot, unless we want
+      -- to require the ALTER SESSION system privilege for every user who uses
+      -- this package. That is because DBMS_SESSION is defined as AUTHID
+      -- CURRENT_USER. This AUTHID value infects any procedure that has
+      -- DBMS_SESSION in its call stack. So, the only way to create a procedure
+      -- to enable or disable tracing is to use the ALTER SESSION syntax
+      -- directly, instead of calling a procedure that should have been able to
+      -- abstract away that privilege.
+
    begin
       execute immediate q'[alter session set max_dump_file_size=unlimited]';
       execute immediate q'[alter session set statistics_level=]'||s;
@@ -79,6 +94,9 @@ create or replace package body mr.dev_trace as
 
    procedure trace_end as
    begin
+
+      -- See above "Oracle defect" lamentation.
+
       execute immediate q'[alter session set events 'sql_trace off']';
    end;
 
