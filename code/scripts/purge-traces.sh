@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Your .trc directory name goes here
-TRCDIR=/DIR/diag/rdbms/DBNAME/INSTNAME/trace/	
+TRCDIR=/DIR/diag/rdbms/DB_UNIQUE_NAME/INSTANCE_NAME/trace/	
 
 N=14		# 7, 14, 28 are good numbers for most people
 
