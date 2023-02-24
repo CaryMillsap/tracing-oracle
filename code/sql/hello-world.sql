@@ -7,6 +7,7 @@
 
 -- connect system
 
+show user
 @trace-on
 select 'hello, world' from dual;
 @trace-off
