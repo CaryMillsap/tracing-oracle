@@ -1,6 +1,7 @@
--- "hello, world", your first trace (ADB)
+-- "hello, world", your first trace (ADB-S)
 
--- This script will ONLY run on an Oracle Autonomous Database system.
+-- This script will ONLY run on an Oracle Autonomous Database on shared
+-- infrastructure system.
 
 -- See adb/dev-trace-permissions.sql for information about required privileges
 -- if you can't connect as ADMIN.
