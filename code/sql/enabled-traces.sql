@@ -1,4 +1,4 @@
--- print info about standing traces
+-- print info about enabled (standing) traces
 
 -- Note that this query will report only upon traces enabled with:
 -- - dbms_monitor.client_id_trace_enable
