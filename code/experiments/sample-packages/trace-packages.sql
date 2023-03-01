@@ -1,9 +1,9 @@
 -- bundle the trace features that a developer or DBA needs
 
--- WARNING: Nothing in this script will work on Oracle Autonomous Database,
--- where Oracle have intentionally prohibited any session from using ALTER
--- SESSION SET EVENTS either directly or indirectly, such as by attempting to
--- execute DBMS_SESSION.SESSION_TRACE_ENABLE.
+-- WARNING: Nothing in this script will work in Oracle Autonomous Database on
+-- shared infrastructure (ADB-S), where Oracle have intentionally prohibited
+-- any session from using DBMS_MONITOR or any form of ALTER SESSION SET EVENTS
+-- either directly or indirectly (as DBMS_SESSION.SESSION_TRACE_ENABLE does).
 
 -- Copyright (c) 2022, 2023 Method R Corporation
 
@@ -11,14 +11,14 @@
 connect sys/oracle as sysdba
 
 -- User MR (Method R) will own the packages.
-drop user mr cascade;                                       -- Fresh start
+drop user mr cascade;                  -- Fresh start
 create user mr;
--- create user mr identified by mr;                         -- No need to actually connect as MR
+-- create user mr identified by mr;    -- No need to actually connect as MR
 -- grant create session to mr;
 -- grant create procedure to mr;
-grant alter session                                to mr;   -- Required to use dbms_session.session_trace_enable
+-- grant alter session to mr;          -- Required if you want to use dbms_session.session_trace_enable.
 grant execute  on sys.dbms_application_info        to mr;
-grant execute  on sys.dbms_session                 to mr;
+grant execute  on sys.dbms_session                 to mr;      -- Required to use set_identifier
 grant execute  on sys.dbms_monitor                 to mr;
 grant execute  on sys.dbms_assert                  to mr;
 grant read     on sys.dba_enabled_traces           to mr;
@@ -31,14 +31,14 @@ grant read     on sys.v_$diag_trace_file_contents  to mr;      -- #TODO not used
 
 -- Create the trace package for application developers.
 
-create or replace package mr.dev_trace authid definer as
+create or replace package mr.mrdev authid definer as
 
-   procedure trace_begin(
+   procedure trace_on(
         binds  in boolean  default false
       , plans  in varchar2 default 'first_execution'
       , stats  in varchar2 default 'typical'
    );
-   procedure trace_end;
+   procedure trace_off;
 
    procedure set_module(module in varchar2 default null);
    procedure set_action(action in varchar2 default null);
@@ -51,53 +51,44 @@ create or replace package mr.dev_trace authid definer as
    function get_filename   return varchar2;
    -- function get_content return ???;       -- #TODO return what?
 
-end dev_trace;
+end mrdev;
 /
 
 
-create or replace package body mr.dev_trace as
+create or replace package body mr.mrdev as
 
-   procedure trace_begin(
-        binds   in boolean  default false
-      , plans   in varchar2 default 'first_execution'
-      , stats   in varchar2 default 'typical'
+   procedure trace_on(
+        binds  in boolean  default false
+      , plans  in varchar2 default 'first_execution'
+      , stats  in varchar2 default 'typical'
    ) as
-      b varchar2( 5 char) := case when binds then 'true' else 'false' end;
-      p varchar2(64 char) := dbms_assert.simple_sql_name(plans);
-      -- p sys.dba_enabled_traces.plan_stats%type        := dbms_assert.simple_sql_name(plans);
-
-      -- Oracle defect: astonishingly, sys.dba_enabled_traces.plan_stats%type...
-      -- 1. is called plan_statS (instead of plan_stat, like the argument)
-      -- 2. is big enough to store only the string 'FIRST_EXEC' (and not 'FIRST_EXECUTION')
-      
       s varchar2(64 char) := dbms_assert.simple_sql_name(stats);
-      -- s sys.v_$statistics_level.activation_level%type := dbms_assert.simple_sql_name(stats);
-
-      -- Should use the %type specification here, but it's hard to trust it
-      -- after seeing dba_enabled_traces.
-
-      -- Oracle defect: It would have been so much cleaner to call
-      -- DBMS_SESSION.SESSION_TRACE_ENABLE here. But we cannot, unless we want
-      -- to require the ALTER SESSION system privilege for every user who uses
-      -- this package. That is because DBMS_SESSION is defined as AUTHID
-      -- CURRENT_USER. This AUTHID value infects any procedure that has
-      -- DBMS_SESSION in its call stack. So, the only way to create a procedure
-      -- to enable or disable tracing is to use the ALTER SESSION syntax
-      -- directly, instead of calling a procedure that should have been able to
-      -- abstract away that privilege.
-
    begin
       execute immediate q'[alter session set max_dump_file_size=unlimited]';
       execute immediate q'[alter session set statistics_level=]'||s;
-      execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||q'[,plan_stat=]'||p||q'[']';
+
+      -- I (Cary) use DBMS_MONITOR here instead of DBMS_SESSION, because
+      -- DBMS_SESSION is an invoker's rights package, which requires its
+      -- callers (*anywhere* in the call stack!) to have the ALTER SESSION
+      -- system privilege. A DBA doesn't necessarily want developers having
+      -- ALTER SESSION. DBMS_MONITOR is a definer's rights package. I believe
+      -- that DBMS_SESSION should be, too.
+      -- 
+      -- Another way to write this is with ALTER SESSION. That's ugly, though,
+      -- and less safe than using DBMS_MONITOR.
+      
+         -- execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||q'[,plan_stat=]'||p||q'[']';
+
+      dbms_monitor.session_trace_enable(
+           waits     => true
+         , binds     => binds
+         , plan_stat => plans
+      );
    end;
 
-   procedure trace_end as
+   procedure trace_off as
    begin
-
-      -- See above "Oracle defect" lamentation.
-
-      execute immediate q'[alter session set events 'sql_trace off']';
+      dbms_monitor.session_trace_disable;
    end;
 
    procedure set_module(
@@ -153,7 +144,7 @@ create or replace package body mr.dev_trace as
       return f;
    end;
 
-end dev_trace;
+end mrdev;
 /
 
 show errors
@@ -164,7 +155,7 @@ show errors
 
 -- Trace package for database administrators.
 
-create or replace package mr.dba_trace authid definer as
+create or replace package mr.mrdba authid definer as
 
    all_modules    sys.v_$session.module%type          := dbms_monitor.all_modules;
    all_actions    sys.v_$session.action%type          := dbms_monitor.all_actions;
@@ -212,11 +203,11 @@ create or replace package mr.dba_trace authid definer as
         instance in varchar2 default all_instances
    );
 
-end dba_trace;
+end mrdba;
 /
 
 
-create or replace package body mr.dba_trace  as
+create or replace package body mr.mrdba  as
 
    procedure session_on(
         sid       in binary_integer default null
@@ -326,7 +317,7 @@ create or replace package body mr.dba_trace  as
       );
    end;
 
-end dba_trace;
+end mrdba;
 /
 
 show errors
