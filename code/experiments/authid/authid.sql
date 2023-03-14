@@ -1,4 +1,4 @@
--- show authid for DBMS_MONOTIR, DBMS_SESSION procedures
+-- show authid for DBMS_MONITOR, DBMS_SESSION procedures
 
 -- Thanks to petefinnigan.com.
 
