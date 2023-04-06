@@ -8,7 +8,7 @@
 create or replace trigger &1.trg_no_sys_logon
    after logon on schema
 begin
-   dbms_session.session_trace_enable;
+   dbms_monitor.session_trace_enable;
    exception when others then null;
 end;
 /

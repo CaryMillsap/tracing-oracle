@@ -29,7 +29,8 @@ grant read     on sys.v_$session                   to mr;
 grant read     on sys.v_$diag_trace_file_contents  to mr;      -- #TODO not used yet
 
 
--- Create the trace package for application developers.
+
+-- Trace package mrdev for application developers.
 
 create or replace package mr.mrdev authid definer as
 
@@ -55,6 +56,7 @@ end mrdev;
 /
 
 
+
 create or replace package body mr.mrdev as
 
    procedure trace_on(
@@ -66,24 +68,26 @@ create or replace package body mr.mrdev as
    begin
       execute immediate q'[alter session set max_dump_file_size=unlimited]';
       execute immediate q'[alter session set statistics_level=]'||s;
-
-      -- I (Cary) use DBMS_MONITOR here instead of DBMS_SESSION, because
-      -- DBMS_SESSION is an invoker's rights package, which requires its
-      -- callers (*anywhere* in the call stack!) to have the ALTER SESSION
-      -- system privilege. A DBA doesn't necessarily want developers having
-      -- ALTER SESSION. DBMS_MONITOR is a definer's rights package. I believe
-      -- that DBMS_SESSION should be, too.
-      -- 
-      -- Another way to write this is with ALTER SESSION. That's ugly, though,
-      -- and less safe than using DBMS_MONITOR.
-      
-         -- execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||q'[,plan_stat=]'||p||q'[']';
-
       dbms_monitor.session_trace_enable(
            waits     => true
          , binds     => binds
          , plan_stat => plans
       );
+
+      -- There are at least three ways we could have enabled tracing.
+
+      -- ALTER SESSION is ugly and unsafe:
+
+         -- execute immediate q'[alter session set events 'sql_trace wait=true,bind=]'||b||q'[,plan_stat=]'||p||q'[']';
+
+      -- DBMS_SESSION sounds like it should be the right package to use, but it
+      -- uses invoker's rights, which requires its callers--*anywhere* in the
+      -- call stack!--to have the ALTER SESSION system privilege. It's not good
+      -- for developers to have ALTER SESSION. 
+
+      -- DBMS_MONITOR is definer's rights and does everything we need, cleanly
+      -- and safely.
+
    end;
 
    procedure trace_off as
@@ -153,7 +157,7 @@ show errors
 
 
 
--- Trace package for database administrators.
+-- Trace package mrdba for database administrators.
 
 create or replace package mr.mrdba authid definer as
 
