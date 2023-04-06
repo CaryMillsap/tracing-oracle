@@ -1,4 +1,4 @@
--- crete roles and users that a developer needs for tracing
+-- create roles and users that a developer needs for tracing
 
 
 -- You must be SYSDBA to perform the required grants.
