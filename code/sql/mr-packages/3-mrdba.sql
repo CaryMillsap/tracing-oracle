@@ -11,7 +11,7 @@
 connect sys/oracle as sysdba
 
 
-create or replace package mr.mrdba authid definer as
+create or replace package method_r.mrdba authid definer as
 
    all_modules    sys.v_$session.module%type          := dbms_monitor.all_modules;
    all_actions    sys.v_$session.action%type          := dbms_monitor.all_actions;
@@ -63,7 +63,7 @@ end mrdba;
 /
 
 
-create or replace package body mr.mrdba  as
+create or replace package body method_r.mrdba  as
 
    procedure session_on(
         sid       in binary_integer default null

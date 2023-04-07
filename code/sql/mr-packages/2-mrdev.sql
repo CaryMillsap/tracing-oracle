@@ -11,7 +11,7 @@
 connect sys/oracle as sysdba
 
 
-create or replace package mr.mrdev authid definer as
+create or replace package method_r.mrdev authid definer as
 
    procedure trace_on(
         binds  in boolean  default false
@@ -29,13 +29,14 @@ create or replace package mr.mrdev authid definer as
    function get_action     return varchar2;
    function get_client     return varchar2;
    function get_filename   return varchar2;
+
    -- function get_content return ???;       -- #TODO return what?
 
 end mrdev;
 /
 
 
-create or replace package body mr.mrdev as
+create or replace package body method_r.mrdev as
 
    procedure trace_on(
         binds  in boolean  default false
@@ -91,7 +92,7 @@ create or replace package body mr.mrdev as
         client in varchar2 default null
    ) as
    begin
-      dbms_session.set_identifier(client_id=>client);    -- Bizarre that it's not dbms_application_info.
+      dbms_session.set_identifier(client_id=>client);    -- Bizarre that there's no dbms_application_info.set_identifier.
    end;
 
    function get_service return varchar2
