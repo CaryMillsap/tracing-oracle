@@ -17,38 +17,31 @@ least Oracle 10g, and it's still reproducible in 23c FREE.
 */
 
 
-
--- Connect.
 connect system/oracle
+alter session set max_dump_file_size=unlimited;
 
--- Enable trace.
 exec dbms_monitor.session_trace_enable
-
--- Display the trace file name.
+select value trace0 from v$diag_info where name = 'Default Trace File';
+select 1;
+alter session set tracefile_identifier='1';
 select value trace1 from v$diag_info where name = 'Default Trace File';
-
--- Execute some SQL.
-select 1;
-
--- Close the old trace file and open a new one.
-alter session set tracefile_identifier='new-file';
-
--- Display the new trace file name.
+select 1;   -- Must be the same statement as above.
+alter session set tracefile_identifier='2';
 select value trace2 from v$diag_info where name = 'Default Trace File';
-
--- Execute the same SQL for the new trace file.
-select 1;
-
--- Disable trace.
+select 1;   -- Must be the same statement as above.
 exec dbms_monitor.session_trace_disable
 
 /*
 
 Now, look in the two trace files.
 
-In TRACE1, you'll see a 'PARSING IN CURSOR' section for the 'select 1' cursor.
+In my (cvm) tests, both TRACE1 and TRACE2 contained a 'PARSING IN CURSOR'
+section for the 'select 1' cursor. But run the test again. This time, the
+behavior is different:
 
-In TRACE2, there is no 'PARSING IN CURSOR' section for the cursor.
+- In TRACE1, you'll see a 'PARSING IN CURSOR' section for the 'select 1' cursor.
+
+- In TRACE2, there is no 'PARSING IN CURSOR' section for the cursor.
 
 It appears that the DBMS is checking a state variable holding the information,
 "Have I emitted a 'PARSING IN CURSOR' section for this cursor?" The real

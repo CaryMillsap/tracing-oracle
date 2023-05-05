@@ -1,0 +1,68 @@
+Trace file /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_39079_test01.trc
+Oracle Database 23c Free, Release 23.0.0.0.0 - Developer-Release
+Version 23.2.0.0.0
+Build label:    RDBMS_23.2.0.0.0_LINUX.X64_230325
+ORACLE_HOME:    /opt/oracle/product/23c/dbhomeFree
+System name:	Linux
+Node name:	localhost.localdomain
+Release:	5.15.0-8.91.4.1.el8uek.x86_64
+Version:	#2 SMP Tue Mar 7 18:28:34 PST 2023
+Machine:	x86_64
+VM name:	KVM CPUID feature flags: 0x01000089
+CLID:	P
+Instance name: FREE
+Redo thread mounted by this instance: 1
+Oracle process number: 69
+Unix process pid: 39079, NID: 4026531836, image: oracle@localhost.localdomain
+
+
+*** 2023-04-17T20:30:29.555939+00:00 (FREEPDB1(3))
+*** SESSION ID:(302.35536) 2023-04-17T20:30:29.555959+00:00
+*** CLIENT ID:() 2023-04-17T20:30:29.555967+00:00
+*** SERVICE NAME:(freepdb1) 2023-04-17T20:30:29.555973+00:00
+*** MODULE NAME:(SQL Developer) 2023-04-17T20:30:29.555979+00:00
+*** ACTION NAME:() 2023-04-17T20:30:29.555985+00:00
+*** CLIENT DRIVER:(jdbcthin : 21.4.0.0.0) 2023-04-17T20:30:29.555990+00:00
+*** CONTAINER ID:(3) 2023-04-17T20:30:29.555996+00:00
+*** CLIENT IP:(10.0.2.2) 2023-04-17T20:30:29.556003+00:00
+*** CONNECTION ID:(fLaTMNmRQAeHR/9wKx0RJQ==) 2023-04-17T20:30:29.556010+00:00
+ 
+
+*** TRACE CONTINUED FROM FILE /opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_39079.trc ***
+
+EXEC #139752909111600:c=44,e=44,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=0,plh=0,tim=98778611515
+WAIT #139752909111600: nam='SQL*Net message to client' ela=11 driver id=1413697536 #bytes=1 p3=0 obj#=4294967295 tim=98778611842
+WAIT #139752909111600: nam='SQL*Net message from client' ela=5419 driver id=1413697536 #bytes=1 p3=0 obj#=4294967295 tim=98778617278
+CLOSE #139752909111600:c=8,e=8,dep=0,type=1,tim=98778617376
+EXEC #139752918697464:c=0,e=17,p=0,cr=0,cu=0,mis=0,r=0,dep=1,og=4,plh=1072382624,tim=98778619075
+FETCH #139752918697464:c=0,e=11,p=0,cr=2,cu=0,mis=0,r=0,dep=1,og=4,plh=1072382624,tim=98778619115
+CLOSE #139752918697464:c=0,e=1,dep=1,type=3,tim=98778619133
+EXEC #139752918697464:c=0,e=8,p=0,cr=0,cu=0,mis=0,r=0,dep=1,og=4,plh=1072382624,tim=98778619159
+FETCH #139752918697464:c=0,e=5,p=0,cr=2,cu=0,mis=0,r=0,dep=1,og=4,plh=1072382624,tim=98778619174
+CLOSE #139752918697464:c=0,e=0,dep=1,type=3,tim=98778619185
+EXEC #139752918697464:c=0,e=7,p=0,cr=0,cu=0,mis=0,r=0,dep=1,og=4,plh=1072382624,tim=98778619206
+FETCH #139752918697464:c=0,e=3,p=0,cr=2,cu=0,mis=0,r=0,dep=1,og=4,plh=1072382624,tim=98778619217
+CLOSE #139752918697464:c=0,e=1,dep=1,type=3,tim=98778619231
+=====================
+PARSING IN CURSOR #139752905996888 len=70 dep=0 uid=9 oct=3 lid=9 tim=98778619336 hv=185555460 ad='6181f500' sqlid='7xynx405hyqh4'
+select value trace2 from v$diag_info where name = 'Default Trace File'
+END OF STMT
+PARSE #139752905996888:c=761,e=1933,p=0,cr=15,cu=0,mis=1,r=0,dep=0,og=1,plh=1636480816,tim=98778619336
+EXEC #139752905996888:c=0,e=43,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=1,plh=1636480816,tim=98778619411
+WAIT #139752905996888: nam='SQL*Net message to client' ela=14 driver id=1413697536 #bytes=1 p3=0 obj#=4294967295 tim=98778619461
+FETCH #139752905996888:c=0,e=34,p=0,cr=0,cu=0,mis=0,r=1,dep=0,og=1,plh=1636480816,tim=98778619515
+STAT #139752905996888 id=1 cnt=1 pid=0 pos=1 obj=0 op='FIXED TABLE FULL X$DIAG_INFO (cr=0 pr=0 pw=0 str=1 time=60 dr=0 dw=0 us cost=0 size=50 card=1)'
+WAIT #139752905996888: nam='SQL*Net message from client' ela=7196 driver id=1413697536 #bytes=1 p3=0 obj#=4294967295 tim=98778626777
+CLOSE #139752905996888:c=9,e=8,dep=0,type=0,tim=98778626877
+PARSE #139752909113080:c=20,e=21,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=1,plh=1388734953,tim=98778626935
+EXEC #139752909113080:c=21,e=21,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=1,plh=1388734953,tim=98778626971
+WAIT #139752909113080: nam='SQL*Net message to client' ela=10 driver id=1413697536 #bytes=1 p3=0 obj#=4294967295 tim=98778627011
+FETCH #139752909113080:c=5,e=5,p=0,cr=0,cu=0,mis=0,r=1,dep=0,og=1,plh=1388734953,tim=98778627035
+WAIT #139752909113080: nam='SQL*Net message from client' ela=12672 driver id=1413697536 #bytes=1 p3=0 obj#=4294967295 tim=98778639733
+CLOSE #139752909113080:c=12,e=12,dep=0,type=3,tim=98778639887
+=====================
+PARSING IN CURSOR #139752905996888 len=46 dep=0 uid=9 oct=47 lid=9 tim=98778641221 hv=2585690420 ad='619958d0' sqlid='7wwcby6d1x09n'
+BEGIN dbms_monitor.session_trace_disable; END;
+END OF STMT
+PARSE #139752905996888:c=1097,e=1277,p=0,cr=0,cu=0,mis=1,r=0,dep=0,og=1,plh=0,tim=98778641220
+EXEC #139752905996888:c=291,e=291,p=0,cr=0,cu=0,mis=0,r=1,dep=0,og=1,plh=0,tim=98778641582
