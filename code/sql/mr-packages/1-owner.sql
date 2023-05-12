@@ -3,7 +3,8 @@
 -- Copyright (c) 2022, 2023 Method R Corporation
 
 
-connect sys/oracle as sysdba
+-- You must be SYSDBA to perform the required grants.
+connect sys/oracle@orcl as sysdba
 
 drop user method_r cascade;                        -- Fresh start.
 create user method_r;                              -- This user will own the packages.

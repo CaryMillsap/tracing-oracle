@@ -2,7 +2,7 @@
 
 
 -- You must be SYSDBA to perform the required grants.
-connect sys/oracle as sysdba
+connect sys/oracle@orcl as sysdba
 
 
 -- User DEV1 represents an application developer.

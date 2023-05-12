@@ -2,7 +2,7 @@
 
 
 -- You must be SYSDBA to perform the required grants.
-connect sys/oracle as sysdba
+connect sys/oracle@orcl as sysdba
 
 
 -- Create public synonyms for method_r.* packages.
