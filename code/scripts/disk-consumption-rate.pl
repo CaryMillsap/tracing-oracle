@@ -15,42 +15,46 @@ our %Opt = (
    ofile    => '',
 );
 our %Options = (
-   "o"      => \$Opt{ofile},     # Not implemented (easy enough to do on the command line with `tee`).
+   "o"      => \$Opt{ofile},  # Not implemented (easy enough to do on the command line with `tee`).
 );
 GetOptions(%Options) or die;
 
 my ($dir, $interval, $count) = (
-   $ARGV[0] //  ".",       # Directory name.
-   $ARGV[1] //   10,       # Interval duration in seconds.
-   $ARGV[2] // 1000,       # Number of intervals.
+   $ARGV[0] //  ".",          # Directory name.
+   $ARGV[1] //   10,          # Interval duration in seconds.
+   $ARGV[2] // 1000,          # Number of intervals.
 );
 printf "%s '%s' %d %d\n", $0, File::Spec->rel2abs($dir), $interval, $count;
 
 my $format = "%Y-%m-%dT%H:%M:%S";      # ISO 8601.
 
-sub d {        # Execute the date command.
+sub d {
+   # Execute the date command.
    chomp(my $d = qx(date "+$format")); # `date` prints a newline, so chomp it.
    return $d;
 }
-sub k {        # Execute the du command.
+sub k {
+   # Execute the du command.
    return 0 if not -d "$dir";
    chomp(my $k = qx(du -ks "$dir"));   # `du` prints a newline, so chomp it.
    $k =~ s/^(\d+).*/$1/;               # `du` returns /\d+  $dir/.
    return $k;
 }
-sub p($$$$) {  # Print the rates from (d0,k0) to (d1,k1).
+sub p($$$$) {
+   # Print the rates from (d0,k0) to (d1,k1).
    my ($d0, $k0, $d1, $k1) = @_;
    my $s = Time::Piece->strptime($d1, $format) - Time::Piece->strptime($d0, $format);
    return if $s == 0;
    my $k = $k1 - $k0;
+   my $kps = $k/$s;
    printf "%s … %s = %4d s   %9d KB … %9d KB = %9d KB   %10.1f KB/s  %10.1f MB/m  %10.1f GB/h  %10.1f TB/d\n",
-      $d0, $d1, $s, $k0, $k1, $k, $k/$s, $k/$s/1e3*60, $k/$s/1e6*60*60, $k/$s/1e9*60*60*24;
+      $d0, $d1, $s, $k0, $k1, $k, $kps, $kps/1e3*60, $kps/1e6*60*60, $kps/1e9*60*60*24;
 }
-$SIG{INT} = sub { exit; };       # Execute the END block upon Ctrl-C.
+$SIG{INT} = sub { exit; }; # Execute the END block upon Ctrl-C.
 
-my ($d00, $k00);                 # First ever (date, kb) tuple.
-my ($d0, $k0);                   # Prior (date, kb) tuple.
-my ($d1, $k1);                   # Current (date, kb) tuple.
+my ($d00, $k00);           # First ever (date, kb) tuple.
+my ($d0, $k0);             # Prior (date, kb) tuple.
+my ($d1, $k1);             # Current (date, kb) tuple.
 
 ($d00, $k00) = ($d0, $k0) = ($d1, $k1) = (d, k);
 for (1..$count) {
