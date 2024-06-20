@@ -15,24 +15,25 @@ our %Opt = (
    ofile    => '',
 );
 our %Options = (
-   "o"         => \$Opt{ofile},  # Not implemented (easy enough to do on the command line with `tee`).
+   "o"      => \$Opt{ofile},     # Not implemented (easy enough to do on the command line with `tee`).
 );
 GetOptions(%Options) or die;
 
 my ($dir, $interval, $count) = (
-   $ARGV[0] //  ".",             # Directory name.
-   $ARGV[1] //   10,             # Interval duration in seconds.
-   $ARGV[2] // 1000,             # Number of intervals.
+   $ARGV[0] //  ".",       # Directory name.
+   $ARGV[1] //   10,       # Interval duration in seconds.
+   $ARGV[2] // 1000,       # Number of intervals.
 );
 printf "%s '%s' %d %d\n", $0, File::Spec->rel2abs($dir), $interval, $count;
 
-my $format = "%Y-%m-%dT%H:%M:%S";
+my $format = "%Y-%m-%dT%H:%M:%S";      # ISO 8601.
 
 sub d {        # Execute the date command.
    chomp(my $d = qx(date "+$format")); # `date` prints a newline, so chomp it.
    return $d;
 }
 sub k {        # Execute the du command.
+   return 0 if not -d "$dir";
    chomp(my $k = qx(du -ks "$dir"));   # `du` prints a newline, so chomp it.
    $k =~ s/^(\d+).*/$1/;               # `du` returns /\d+  $dir/.
    return $k;
@@ -58,6 +59,7 @@ for (1..$count) {
    p($d0, $k0, $d1, $k1);
    ($d0, $k0) = ($d1, $k1);
 }
+
 END {
    print "\n";
    p($d00, $k00, $d1, $k1);
