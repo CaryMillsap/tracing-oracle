@@ -18,6 +18,7 @@ our %Opt = (
    unit     => 'MB/h',
 );
 our %Options = (
+<<<<<<< HEAD
    "debug"  => \$Opt{debug},
    "help|?" => sub { pod2usage(-input=>\*main::DATA, -verbose => 1, -exit => 0); },
    "man"    => sub { pod2usage(-input=>\*main::DATA, -verbose => 2, -exit => 0); -formatter => "Pod::Text::Termcap"; },
@@ -25,6 +26,15 @@ our %Options = (
    #  
    "o"      => \$Opt{ofile},  # Not implemented (easy enough to do on the command line with `tee`).
    "unit=s" => \$Opt{unit},
+=======
+   "debug"     => \$Opt{debug},
+   "help|?"    => sub { pod2usage(-input=>\*main::DATA, -verbose => 1, -exit => 0); },
+   "man"       => sub { pod2usage(-input=>\*main::DATA, -verbose => 2, -exit => 0); -formatter => "Pod::Text::Termcap"; },
+   "usage"     => sub { pod2usage(-input=>\*main::DATA, -verbose => 0, -exit => 0); },
+   #  
+   "o"         => \$Opt{ofile},  # Not implemented (easy enough to do on the command line with `tee`).
+   "unit=s"    => \$Opt{unit},
+>>>>>>> ecf77aec9c072b3c42a7b48ffe2d520dc7065437
 );
 GetOptions(%Options) or die;
 
@@ -47,6 +57,10 @@ my %seconds = (
    "w"   => 60*60*24*7,
 );
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ecf77aec9c072b3c42a7b48ffe2d520dc7065437
 my ($qunit, $tunit);
 my ($bytes, $seconds);
 {
