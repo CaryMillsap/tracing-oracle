@@ -13,7 +13,7 @@ use Pod::Usage;
 our $Program = fileparse $0, qr(\..*);
 
 our %Opt = (
-   cols     => 'kmgt',
+   cols     => 'kmgt',        # all columns: KB/s, MB/m, GB/h, TB/d
    ofile    => '',
 );
 our %Options = (
@@ -57,9 +57,11 @@ sub p($$$$) {
    printf "%s … %s = %4d s   ", $d0, $d1, $s;
    printf "%9d KB … %9d KB = %9d KB", $k0, $k1, $k;
    printf "  %10.1f KB/s", $kps              if $Opt{cols} =~ 'k';
-   printf "  %10.1f MB/s", $kps/1e3*60       if $Opt{cols} =~ 'm';
-   printf "  %10.1f GB/s", $kps/1e6*60*60    if $Opt{cols} =~ 'g';
-   printf "  %10.1f TB/s", $kps/1e9*60*60*24 if $Opt{cols} =~ 't';
+   printf "  %10.1f MB/m", $kps/1e3*60       if $Opt{cols} =~ 'm';
+   printf "  %10.1f GB/h", $kps/1e6*60*60    if $Opt{cols} =~ 'g';
+   printf "  %10.1f TB/d", $kps/1e9*60*60*24 if $Opt{cols} =~ 't';
+   printf "  %10d GB free", 0;
+   printf "  %10d days until full", 0;
    print "\n";
 }
 $SIG{INT} = sub { exit; }; # Execute the END block upon Ctrl-C.
@@ -94,7 +96,7 @@ disk-consumption-rate - calculate disk consumption rate
 
 disk-consumption-rate [ I<options> ] [ I<directory> [ I<interval> [ I<count> ] ] ]
 
-  --cols=s     print x/second columns, where x in (k, m, g, t); default --cols=kmgt.
+  --cols=s     print X/second columns, where X in (k, m, g, t); default --cols=kmgt
 
 
 =head1 DESCRIPTION
