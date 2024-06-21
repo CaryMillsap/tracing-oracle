@@ -2,8 +2,8 @@
 
 # Fill a disk (for testing disk-consumption-rate.pl)
 
-output_dir="DELETE-ME"
-output_file="delete-me.img"
+output_dir="DELETE_ME"
+output_file="delete_me.img"
 output_path="$output_dir/$output_file"
 tmp_file="tmp.img"
 
