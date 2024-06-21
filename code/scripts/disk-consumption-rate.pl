@@ -12,9 +12,11 @@ use File::Spec;
 our $Program = fileparse $0, qr(\..*);
 
 our %Opt = (
+   cols     => 'kmgt',
    ofile    => '',
 );
 our %Options = (
+   "cols=s" => \$Opt{cols},
    "o"      => \$Opt{ofile},  # Not implemented (easy enough to do on the command line with `tee`).
 );
 GetOptions(%Options) or die;
@@ -47,8 +49,13 @@ sub p($$$$) {
    return if $s == 0;
    my $k = $k1 - $k0;
    my $kps = $k/$s;
-   printf "%s … %s = %4d s   %9d KB … %9d KB = %9d KB   %10.1f KB/s  %10.1f MB/m  %10.1f GB/h  %10.1f TB/d\n",
-      $d0, $d1, $s, $k0, $k1, $k, $kps, $kps/1e3*60, $kps/1e6*60*60, $kps/1e9*60*60*24;
+   printf "%s … %s = %4d s   ", $d0, $d1, $s;
+   printf "%9d KB … %9d KB = %9d KB", $k0, $k1, $k;
+   printf "  %10.1f KB/s", $kps              if $Opt{cols} =~ 'k';
+   printf "  %10.1f MB/s", $kps/1e3*60       if $Opt{cols} =~ 'm';
+   printf "  %10.1f GB/s", $kps/1e6*60*60    if $Opt{cols} =~ 'g';
+   printf "  %10.1f TB/s", $kps/1e9*60*60*24 if $Opt{cols} =~ 't';
+   print "\n";
 }
 $SIG{INT} = sub { exit; }; # Execute the END block upon Ctrl-C.
 
@@ -80,7 +87,9 @@ disk-consumption-rate - calculate disk consumption rate
 
 =head1 SYNOPSIS
 
-disk-consumption-rate [ I<directory> [ I<interval> [ I<count> ] ] ]
+disk-consumption-rate [ I<options> ] [ I<directory> [ I<interval> [ I<count> ] ] ]
+
+  --cols=s     print x/second columns, where x in (k, m, g, t); default --cols=kmgt.
 
 
 =head1 DESCRIPTION
