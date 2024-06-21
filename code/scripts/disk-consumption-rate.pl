@@ -8,6 +8,7 @@ use File::Basename;
 use Getopt::Long;
 use Time::Piece;
 use File::Spec;
+use Pod::Usage;
 
 our $Program = fileparse $0, qr(\..*);
 
@@ -16,6 +17,10 @@ our %Opt = (
    ofile    => '',
 );
 our %Options = (
+   "help|?"    => sub { pod2usage(-input=>\*main::DATA, -verbose => 1, -exit => 0); },
+   "man"       => sub { pod2usage(-input=>\*main::DATA, -verbose => 2, -exit => 0); -formatter => "Pod::Text::Termcap"; },
+   "usage"     => sub { pod2usage(-input=>\*main::DATA, -verbose => 0, -exit => 0); },
+   #  
    "cols=s" => \$Opt{cols},
    "o"      => \$Opt{ofile},  # Not implemented (easy enough to do on the command line with `tee`).
 );
@@ -77,7 +82,7 @@ END {
 }
 
 
-__END__
+__DATA__
 
 
 =head1 NAME
