@@ -60,10 +60,10 @@ my ($bytes, $seconds);
 
 my ($dir, $interval, $count) = (
    $ARGV[0] //  ".",          # Directory name.
-   $ARGV[1] //   1,           # Interval duration in seconds.
+   $ARGV[1] //    1,          # Interval duration in seconds.
    $ARGV[2] // 1000,          # Number of intervals.
 );
-printf "%s '%s' %d %d\n\n", $0, File::Spec->rel2abs($dir), $interval, $count;
+printf "%s '%s' %d %d\n\n", basename($0), File::Spec->rel2abs($dir), $interval, $count;
 
 my $format = "%Y-%m-%dT%H:%M:%S";      # ISO 8601.
 
@@ -72,18 +72,20 @@ sub d {
    chomp(my $d = qx(date "+$format")); # `date` prints a newline, so chomp it.
    return $d;
 }
-sub du {
+sub du($) {
    # Execute the du command, return bytes.
    # ASSERT: `du -s` returns bytes used in the first field of its output.
    # ASSERT: `du -k` returns 1024-byte blocks.
+   my ($dir) = @_;
    return 0 if not -d "$dir";
    my $du = qx(du -ks "$dir");
    return (split /\s+/, $du)[0] * 1024;
 }
-sub df { 
+sub df($) { 
    # Execute the df command, return bytes.
    # ASSERT: `df` returns "Available" in the fourth field of the final line of its output.
    # ASSERT: `df -k` returns 1024-byte blocks.
+   my ($dir) = @_;
    my $df = qx(df -k "$dir" | tail -1);
    return (split /\s+/, $df)[3] * 1024;
 }
@@ -94,12 +96,12 @@ sub p($$$$) {
    return if $s == 0;
    my $du = $du2 - $du1;
    my $bps = $du/$s;
-   my $df = df;
    # Next stats are in s, irrespective of the chosen time unit.
-   printf "%s … %s = %4d s   ", $date1, $date2, $s;
+   printf "%s … %s = %d s   ", $date1, $date2, $s;
    # Next stats are in KB, irrespective of the chosen quantity unit.
-   printf "(%9d KB … %9d KB) = %9d KB", $du1/$bytes{KB}, $du2/$bytes{KB}, $du/$bytes{KB};
-   printf "  %10.1f %s/%s", $bps/($bytes/$seconds), $qunit, $tunit;
+   # printf "%d KB … %d KB = %d KB", $du1/$bytes{KB}, $du2/$bytes{KB}, $du/$bytes{KB};
+   printf "  %.1f %s/%s", $bps/($bytes/$seconds), $qunit, $tunit;
+   my $df = df($dir);
    printf "  %10d %s free", $df/$bytes, $qunit;
    printf "   ";
    if ($bps <= 0) {
@@ -115,10 +117,10 @@ my ($date0, $du0);         # First ever (date, du) tuple.
 my ($date1, $du1);         # Prior (date, du) tuple.
 my ($date2, $du2);         # Current (date, du) tuple.
 
-($date0, $du0) = ($date1, $du1) = ($date2, $du2) = (d, du);
+($date0, $du0) = ($date1, $du1) = ($date2, $du2) = (d, du($dir));
 for (1..$count) {
    sleep($interval);
-   ($date2, $du2) = (d, du);
+   ($date2, $du2) = (d, du($dir));
    p($date1, $du1, $date2, $du2);
    ($date1, $du1) = ($date2, $du2);
 }
@@ -134,29 +136,29 @@ __DATA__
 
 =head1 NAME
 
-disk-consumption-rate - calculate disk consumption rate
+du-rate - calculate disk consumption rate
 
 
 =head1 SYNOPSIS
 
-disk-consumption-rate [ I<options> ] [ I<directory> [ I<interval> [ I<count> ] ] ]
+du-rate [ I<options> ] [ I<directory> [ I<interval> [ I<count> ] ] ]
 
 
 =head1 DESCRIPTION
 
-The B<disk-consumption-rate> program executes the B<du -ks> command upon
+The B<du-rate> program executes the B<du -ks> command upon
 I<directory>, once every I<interval> seconds, for I<count> iterations. It will
 write a line to standard output for each iteration.
 
 If no parameter values are specified, the program will run as if you typed the
 following:
 
-   disk-consumption-rate . 10 1000
+   du-rate . 10 1000
 
 That is, the I<directory> value defaults to the current working directory,
 I<interval> defaults to 10 seconds, and I<count> defaults to 1,000 intervals. 
 
-After reporting its final interval, B<disk-consumption-rate> prints a line that
+After reporting its final interval, B<du-rate> prints a line that
 summarizes all the disk consumption that has occurred since the program was
 executed. To terminate the program before it reaches the specified interval
 count, simply press Ctrl-C. The program will then print its summary line and
@@ -189,11 +191,10 @@ disk space. They knew how many terabytes of available storage they had, but
 they didn't know how quickly their trace would consume that space. We executed
 a few 10-minute tests during which we would enable database-wide tracing and
 then measure the consumption rate in the Oracle Database DIAGNOSTIC_DEST
-directory with B<disk-consumption-rate>. With this information, we could
-estimate how many days we'd be able to trace before worrying about running out
-of space.
+directory with B<du-rate>. With this information, we could estimate how many
+days we'd be able to trace before worrying about running out of space.
 
-To test B<disk-consumption-rate>, use F<fill-disk.sh>.
+To test B<du-rate>, use F<fill-disk.sh>.
 
 
 =head1 AUTHOR
